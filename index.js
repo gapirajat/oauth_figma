@@ -13,7 +13,7 @@ const clientSecret = process.env.FIGMA_CLIENT_SECRET;
 const redirectUri = process.env.REDIRECT_URI;
 let state; // Placeholder for the state value
 
-app.get('/', (req, res) => {
+app.get('/a', (req, res) => {
   res.send('Hello, Figma OAuth!');
 });
 
