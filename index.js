@@ -13,7 +13,7 @@ const clientSecret = process.env.FIGMA_CLIENT_SECRET;
 const redirectUri = process.env.REDIRECT_URI;
 let state; // Placeholder for the state value
 
-app.get('/a', (req, res) => {
+app.get('/callback', (req, res) => {
   res.send('Hello, Figma OAuth!');
 });
 
@@ -28,7 +28,7 @@ app.get('/auth', (req, res) => {
   res.redirect(url);
 });
 
-app.get('/callback', async (req, res) => {
+app.get('/a', async (req, res) => {
   const { code, state: returnedState } = req.query;
   if (!code || !returnedState || returnedState !== state) {
     return res.status(400).send('Invalid state or code');
