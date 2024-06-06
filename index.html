@@ -48,7 +48,6 @@ async function downloadFigmaData(FILE, frameName, accessToken) {
   try {
     const response = await fetch(`https://api.figma.com/v1/files/${FILE}`, {
       headers: {
-        "method": 'GET',
         "X-Figma-Token": accessToken2,
       },
     });
