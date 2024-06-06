@@ -6,19 +6,191 @@
   <title>OAuth Flow</title>
 </head>
 <body>
+  <input type="text" id="inputField1" placeholder="File ID">
+  <input type="text" id="inputField2" placeholder="Frame Name">
   <button id="authButton">Authenticate with Figma</button>
 
   <script>
+    let accessToken = null;
     document.getElementById('authButton').addEventListener('click', () => {
+      const inputField1 = document.getElementById('inputField1').value;
+      const inputField2 = document.getElementById('inputField2').value;
+
+      if (!inputField1 || !inputField2) {
+        alert('Please fill in both input fields.');
+        return;
+      }
+
       const authWindow = window.open('/auth', 'authWindow', 'width=600,height=400');
       
       window.addEventListener('message', (event) => {
         if (event.origin === window.location.origin) {
-          console.log('Access Token:', event.data);
+          accessToken = event.data;
           authWindow.close();
+          processTokenAndInputs(accessToken, inputField1, inputField2);
+          document.getElementById('authButton').disabled = true;
         }
       });
     });
+
+    function processTokenAndInputs(token, input1, input2) {
+      console.log('Access Token:', token);
+      console.log('FileID:', input1);
+      console.log('frameName:', input2);
+
+      // Call your function here with the token and inputs
+      myFunction(token, input1, input2);
+      downloadFigmaData(FILE, frameName, accessToken);
+    }
+
+async function downloadFigmaData(FILE, frameName, accessToken) {
+  try {
+    const response = await fetch(`https://api.figma.com/v1/files/${FILE}`, {
+      headers: {
+        "X-Figma-Token": accessToken,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error downloading data: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const frame = findFrameByName(data.document, frameName);
+    if (frame) {
+        const sortedChildren = sortMixedObjectByPosition(frame);
+        console.log(parseFigmaData(sortedChildren));
+        
+
+    } else {
+        console.log("Frame not found.");
+    }
+
+    // Save data to a JSON file (requires fs module)
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+function findFrameByName(node, name) {
+    if (node.type === 'FRAME' && node.name === name) {
+        return node;
+    } else if (node.children) {
+        for (let child of node.children) {
+            const found = findFrameByName(child, name);
+            if (found) return found;
+        }
+    }
+    return null; // Return null if the frame is not found
+}
+function parseFigmaData(data) {
+  const parseNode = (node, parentDimensions = { width: null, height: null }) => {
+    let element;
+
+    const getBackgroundColor = (fills) => {
+      if (!fills || fills.length === 0) return '';
+      const fill = fills[0];
+      if (fill.type === 'SOLID') {
+        const { r, g, b, a } = fill.color;
+        return `bg-[rgba(${(r * 255).toFixed(0)},${(g * 255).toFixed(0)},${(b * 255).toFixed(0)},${a})]`;
+      }
+      return '';
+    };
+
+    const getBorderColor = (strokes) => {
+      if (!strokes || strokes.length === 0) return '';
+      const stroke = strokes[0];
+      if (stroke.type === 'SOLID') {
+        const { r, g, b, a } = stroke.color;
+        return `border-[rgba(${(r * 255).toFixed(0)},${(g * 255).toFixed(0)},${(b * 255).toFixed(0)},${a})]`;
+      }
+      return '';
+    };
+
+    const getBorderRadius = (radius) => {
+      if (!radius || radius.length === 'undefined') return '';
+      return `border rounded-${radius}`
+    };
+
+    switch (node.type) {
+      case 'TEXT':
+        element = `<p class="text-${node.style.fontSize} font-${node.style.fontWeight} leading-${node.style.lineHeightPx}">${node.characters}</p>`;
+        break;
+      case 'IMAGE':
+        // Assuming the image URL is available in the node, replace 'imageUrl' with the actual property.
+        element = `<img id="${node.imageRef}" src="${node.imageUrl}" alt="${node.name}" class="w-${calculatePercentage(node.absoluteBoundingBox.width, parentDimensions.width)} h-${calculatePercentage(node.absoluteBoundingBox.height, parentDimensions.height)}"/>`;
+        break;
+      case 'FRAME':
+      case 'INSTANCE':
+      default:
+        const isFlexRow = isFlexDirection(node.children, 'y');
+        const isFlexCol = isFlexDirection(node.children, 'x');
+        let flexClass = '';
+
+        if (isFlexRow) {
+          flexClass = 'flex flex-row flex-wrap';
+        } else if (isFlexCol) {
+          flexClass = 'flex flex-col';
+        }
+        else {
+          flexClass = 'flex flex-wrap'
+        }
+
+        const backgroundColorClass = getBackgroundColor(node.fills);
+        const borderColorClass = getBorderColor(node.strokes);
+        const borderRadius = getBorderRadius(node.cornerRadius);
+
+        element = `<div class="${flexClass} ${backgroundColorClass} ${borderRadius} ${borderColorClass} w-[${calculatePercentage(node.absoluteBoundingBox.width, parentDimensions.width)}] h-[${calculatePercentage(node.absoluteBoundingBox.height, parentDimensions.height)}]">`;
+        if (node.children && node.children.length > 0) {
+          element += (node.children || []).map(child => parseNode(child, node.absoluteBoundingBox)).join('');
+        }
+        element += `</div>`;
+        break;
+    }
+
+    return element;
+  };
+
+  const isFlexDirection = (children, axis) => {
+    if (!children || children.length < 2) return false;
+
+    let positions = children.map(child => child.absoluteBoundingBox[axis]);
+    let firstPosition = positions[0];
+    
+    // Check if all positions are approximately equal (within 5 pixels)
+    return positions.every(pos => Math.abs(pos - firstPosition) < 5);
+  };
+
+  const calculatePercentage = (childDimension, parentDimension) => {
+    if (!parentDimension) return childDimension;
+    return `${(childDimension / parentDimension * 100).toFixed(2)}%`;
+  };
+
+  return parseNode(data);
+}
+
+function sortMixedObjectByPosition(mixedObject) {
+  if (Array.isArray(mixedObject)) {
+    return mixedObject.sort((a, b) => {
+      // Compare x positions
+      // If x positions are the same, compare y positions
+      if (Math.abs(a.absoluteBoundingBox.y - b.absoluteBoundingBox.y) < 100){
+      return a.absoluteBoundingBox.x - b.absoluteBoundingBox.x;
+      }
+      else {
+        return a.absoluteBoundingBox.y - b.absoluteBoundingBox.y;
+      }
+    }).map(item => sortMixedObjectByPosition(item));
+  } else if (typeof mixedObject === 'object' && mixedObject !== null) {
+    if (mixedObject.children && Array.isArray(mixedObject.children)) {
+      mixedObject.children = sortMixedObjectByPosition(mixedObject.children);
+    }
+    return mixedObject;
+  } else {
+    return mixedObject; // Return as is if it's neither array nor object
+  }
+}
+
   </script>
 </body>
 </html>
