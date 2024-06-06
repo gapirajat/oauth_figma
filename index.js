@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto'); // Node.js built-in module for cryptographic functionality
 const path = require('path');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
