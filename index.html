@@ -15,7 +15,6 @@
 
   <script>
     let accessToken = null;
-    const accessToken2 = "figd_Yp6b4hdT4dwPK1oVbqNO5xXzSTSC_jCNmXEcVV20";
     document.getElementById('authButton').addEventListener('click', () => {
       const inputField1 = document.getElementById('inputField1').value;
       const inputField2 = document.getElementById('inputField2').value;
@@ -49,7 +48,7 @@
       function getUserData(token) {
       var url = "https://api.figma.com/v1/me/";
       var headers = {
-        "Authorization": "Bearer " + token
+        "Authorization": "Bearer" + token
       };
 
       return new Promise(function(resolve, reject) {
