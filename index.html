@@ -10,6 +10,8 @@
   <input type="text" id="inputField1" placeholder="File ID">
   <input type="text" id="inputField2" placeholder="Frame Name">
   <button id="authButton">Authenticate with Figma</button>
+  <h1>Use the api with caution</h1>
+  <div id="output"></div>
 
   <script>
     let accessToken = null;
@@ -96,16 +98,24 @@ async function downloadFigmaData(FILE, frameName, accessToken) {
 
     if (frame) {
       const sortedChildren = sortMixedObjectByPosition(frame);
-      console.log(parseFigmaData(sortedChildren));
+      // console.log(parseFigmaData(sortedChildren));
+      getUserData(parseFigmaData(sortedChildren));
     } else {
       console.log("Frame not found.");
     }
+    
 
     // Save data to a JSON file (requires fs module)
   } catch (error) {
     console.error("Error:", error);
   }
 }
+
+function displayUserData(data) {
+      var outputElement = document.getElementById('output');
+      outputElement.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+
 function findFrameByName(node, name) {
     if (node.type === 'FRAME' && node.name === name) {
         return node;
