@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth Flow</title>
+</head>
+<body>
+  <button id="authButton">Authenticate with Figma</button>
+
+  <script>
+    document.getElementById('authButton').addEventListener('click', () => {
+      const authWindow = window.open('/auth', 'authWindow', 'width=600,height=400');
+      
+      window.addEventListener('message', (event) => {
+        if (event.origin === window.location.origin) {
+          console.log('Access Token:', event.data);
+          authWindow.close();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
