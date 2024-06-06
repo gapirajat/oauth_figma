@@ -10,11 +10,10 @@
   <input type="text" id="inputField1" placeholder="File ID">
   <input type="text" id="inputField2" placeholder="Frame Name">
   <button id="authButton">Authenticate with Figma</button>
-  <h1>Use the api with caution</h1>
-  <div id="output"></div>
 
   <script>
     let accessToken = null;
+    const accessToken2 = "figd_Yp6b4hdT4dwPK1oVbqNO5xXzSTSC_jCNmXEcVV20";
     document.getElementById('authButton').addEventListener('click', () => {
       const inputField1 = document.getElementById('inputField1').value;
       const inputField2 = document.getElementById('inputField2').value;
@@ -45,30 +44,6 @@
       downloadFigmaData(input1, input2, accessToken);
     }
 
-      function getUserData(token) {
-      var url = "https://api.figma.com/v1/me/";
-      var headers = {
-        "Authorization": "Bearer" + token
-      };
-
-      return new Promise(function(resolve, reject) {
-        fetch(url, { headers: headers })
-          .then(function(response) {
-            if (response.ok) {
-              return response.json();
-            } else {
-              throw new Error('Error: ' + response.status);
-            }
-          })
-          .then(function(data) {
-            resolve(data);
-          })
-          .catch(function(error) {
-            reject(error);
-          });
-      });
-    }
-
     
 async function downloadFigmaData(FILE, frameName, accessToken) {
   try {
@@ -97,8 +72,9 @@ async function downloadFigmaData(FILE, frameName, accessToken) {
 
     if (frame) {
       const sortedChildren = sortMixedObjectByPosition(frame);
-      // console.log(parseFigmaData(sortedChildren));
-      getUserData(parseFigmaData(sortedChildren));
+      console.log(parseFigmaData(sortedChildren));
+      displayUserData(parseFigmaData(sortedChildren));
+    
     } else {
       console.log("Frame not found.");
     }
