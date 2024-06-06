@@ -89,8 +89,10 @@ async function downloadFigmaData(FILE, frameName, accessToken) {
 }
 
 function displayUserData(data) {
-      var outputElement = document.getElementById('output');
-      outputElement.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    var outputElement = document.getElementById('output');
+      var preElement = document.createElement('pre');
+      preElement.textContent = JSON.stringify(data, null, 2);
+      outputElement.appendChild(preElement);
     }
 
 function findFrameByName(node, name) {
