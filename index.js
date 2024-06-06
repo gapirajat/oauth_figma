@@ -29,15 +29,10 @@ app.get('/auth', (req, res) => {
 });
 
 app.get('/a', async (req, res) => {
-  try {
-      const { code, state: returnedState } = req.query;
+  const { code, state: returnedState } = req.query;
   if (!code || !returnedState || returnedState !== state) {
     return res.status(400).send('Invalid state or code');
   }
-  } catch (error) {
-    console.log(error)
-  }
-
 
   try {
     // Exchange the authorization code for an access token
