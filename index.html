@@ -74,7 +74,7 @@ async function downloadFigmaData(FILE, frameName, accessToken) {
 
     if (frame) {
       const sortedChildren = sortMixedObjectByPosition(frame);
-      console.log(parseFigmaData(sortedChildren));
+      // console.log(parseFigmaData(sortedChildren));
       displayUserData(parseFigmaData(sortedChildren));
     
     } else {
