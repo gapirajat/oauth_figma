@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto'); // Node.js built-in module for cryptographic functionality
-
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -13,10 +13,10 @@ const clientSecret = process.env.FIGMA_CLIENT_SECRET;
 const redirectUri = process.env.REDIRECT_URI;
 let state; // Placeholder for the state value
 
-app.get('/callback', (req, res) => {
-  res.send('Hello, Figma OAuth!');
+// Serve the HTML file
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
-
 
 app.get('/auth', (req, res) => {
   // Generate a random state value
@@ -24,7 +24,6 @@ app.get('/auth', (req, res) => {
 
   // Redirect users to the Figma OAuth authorization URL, including the state parameter
   const url = `https://www.figma.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=file_read&state=${state}&response_type=code`;
-  console.log(clientId);
   res.redirect(url);
 });
 
@@ -47,8 +46,11 @@ app.get('/a', async (req, res) => {
     const accessToken = response.data.access_token;
     // Reset the stored state after successful validation
     state = null;
-    // Use the access token to make authenticated requests to Figma's API
-    res.send(`Access Token: ${accessToken}`);
+    // Send the access token to the client-side script
+    res.send(`<script>
+      window.opener.postMessage('${accessToken}', window.location.origin);
+      window.close();
+    </script>`);
   } catch (error) {
     console.error('Failed to exchange code for token', error);
     res.status(500).send('Failed to exchange code for token');
